@@ -1,22 +1,77 @@
 function dock {
-    parameter t is target.
+    runPath("0:libraries/read_line").
 
-    if not t:typename = "DockingPort" {
+    lock t to target.
+    clearScreen.
+
+    if t:istype("Vessel") {
+        local dockingPorts to t:dockingports:copy.
+
+        if dockingPorts:length = 0 {
+            print "Target has no dockingports".
+            return.
+        }
+
+        local dockedPorts to list().
+        for port in dockingPorts {
+            if port:haspartner {
+                dockedPorts:add(port).
+            }
+        }
+        for port in dockedPorts {
+            dockingPorts:remove(dockingPorts:find(port)).
+        }
+
+        local x is 1.
+        print "Available dockingports at ".
+        for port in dockingPorts {
+            print x + " - " + port:tag.
+            set x to x+1.
+        }
+
+        print "Select dockingport: ".
+        // local portNumber to str_to_num(terminal:input:getchar()).
+        local portNumber to read_line():tonumber(1).
+
+        lock t to dockingPorts[portNumber-1].
+
+        print "Selected port " + portNumber + ": " + t:tag.
+        wait 2.
+    }
+
+    if t:typename <> "DockingPort" {
         print "Target the desired docking port".
+        wait 5.
         return.
     }
 
     SAS off.
-    lock steering to -t:facing:vector.
-
-    until vdot(ship:facing:forevector, -t:facing:vector) > 0.95 {}
-
     RCS on.
 
-    lock dockingPort to ship:controlpart.
+    clearScreen.
+    print "Rotate in degrees: ".
+    local rotation is read_line(19, 0):toNumber(0).
 
-    if not dockingPort:typename = "DockingPort" {
+    print "Docking with a rotation of " + rotation + " degrees " + round(mod(t:facing:roll + rotation, 360), 2).
+    print round(t:facing:pitch, 1) + " " + round(t:facing:yaw, 1).
+    // lock steering to t:facing + r(t:facing:pitch + 180, t:facing:yaw + 180, mod(t:facing:roll + 180 + rotation, 360)).
+    // lock steering to -t:facing:forevector + r(0, 0, rotation).
+    // local f to -t.
+    local rotatedVector to cos(rotation) * t:facing:upvector 
+        + sin(rotation) * (vCrs(t:facing:upvector, -t:facing:vector))
+        + (1 - cos(rotation)) * vDot(-t:facing:vector, t:facing:upvector) * -t:facing:vector.
+
+    lock steering to lookDirUp(-t:facing:vector, rotatedVector).
+
+    until vdot(ship:facing:forevector, -t:facing:vector) > 0.99 wait 1.
+    wait 2.
+    until vdot(ship:facing:forevector, -t:facing:vector) > 0.99 wait 1.
+
+    set dockingPort to ship:controlpart.
+
+    if dockingPort:typename <> "DockingPort" {
         print "Set controlpoint to the dockingport".
+        wait 5.
         return.
     }
 
@@ -51,6 +106,8 @@ function dock {
         ).
     set rightVectorDraw:show to true.
 
+    // set forwardVector to -t:facing:vector.
+
     lock forwardDistanceVector to relativeVector - vdot(relativeVector, upVector) * upVector - vdot(relativeVector, rightVector) * rightVector.
     set forwardDistanceVectorDraw to vecDraw(
         { return dockingPort:position. },
@@ -83,114 +140,189 @@ function dock {
         ).
     set accelerationVectorDraw:show to true.
 
-    set translationScalar to 10.
-    lock translationVector to 10*-v(
-        accelerationVector:x,
-        accelerationVector:z,
-        accelerationVector:y
+    set translationScalar to 5.
+    // set trVec to {
+    //     local vec to translationScalar*v(
+    //         -accelerationVector:z,
+    //         -accelerationVector:x,
+    //         -accelerationVector:y
+    //     ).
+
+    //     // if abs(vec:z) > 0.01 set vec:z to 0.05.
+    //     // if abs(vec:y) > 0.05 set vec:z to 0.
+    //     // else if abs(vec:y) > 0.01 set vec:y to 0.05.
+    //     // if abs(vec:x) > 0.05 set vec:y to 0.
+    //     // else if abs(vec:x) > 0.01 set vec:x to 0.05.
+
+    //     return vec.
+    // }.
+    lock translationVector to translationScalar*v(
+        vDot(accelerationVector, rightVector),
+        vDot(accelerationVector, upVector),
+        vDot(accelerationVector, -t:facing:vector)
     ).
+
+    set translationVectorDraw to vecDraw(
+        { return dockingPort:position. },
+        { return 5*v(translationVector:z, translationVector:y, translationVector:z). },
+        rgb(0.5,1,0) 
+    ).
+    set translationVectorDraw:show to true.
 
     clearScreen.
 
-    set dockingStep to 3.
-    set forwardDistance to 20.
+    set forwardDistance to max(10, min(forwardDistanceVector:mag, 300)).
+
     set maxVelocity to 0.5.
-    print "Canceling relative velocity" at (0,10).
+    if relativeVector:mag > 50 set maxVelocity to 3.
+    else if relativeVector:mag > 20 set maxVelocity to 1.
 
-    until false {
-        if (desiredMovementVector - movementVector):mag < 2 set ship:control:translation to v(0,0,0).
+    print "[Q] cancel" at (0, 36).
 
-        if relativeVector:mag > 50 set maxVelocity to 3.
-        else if relativeVector:mag > 20 set maxVelocity to 1.
-        else if dockingstep = 4 set maxVelocity to 0.2.
-        else set maxVelocity to 0.5.
+    function everyLoop {
+        set ship:control:translation to v(0,0,0).
 
-
-        print vdot(relativeVector, upVector) + "          " at (0, 0).
-        print vdot(relativeVector, rightVector) + "          " at (0, 1).
-        print vdot(forwardDistanceVector, -t:facing:vector) + "          " at (0, 2).
-
-
-
-        // if dockingStep = 0 {    
-
-        //     set desiredMovementVector to -movementVector.
-
-        //     if desiredMovementVector:mag < 0.2 and movementVector:mag < 0.2 {
-        //         print "Straight distance to 10          " at (0,10).
-        //         set dockingStep to 1.
-        //     }
-        // }.
-        // else if dockingStep = 1 {
-        //     set desiredMovementVector to 
-        //         -movementVector 
-        //         + (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector.
-
-        //     if desiredMovementVector:mag < 0.2 and movementVector:mag < 0.2 {
-        //         print "Starboard distance to 0            " at (0,10).
-        //         set dockingStep to 2.
-        //     }
-        // }
-        // else if dockingStep = 2 {
-        //     set desiredMovementVector to 
-        //         -movementVector 
-        //         + (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector
-        //         + vDot(rightVector, relativeVector) * rightVector.
-
-        //     if desiredMovementVector:mag < 0.2 and movementVector:mag < 0.2 {
-        //         print "Top distance to 0               " at (0,10).
-        //         set dockingStep to 3.
-        //     }
-        // }
-        if dockingStep = 3 {
-            set desiredMovementVector to 
-                -movementVector 
-                + (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector
-                + vDot(rightVector, relativeVector) * rightVector
-                + vDot(upVector, relativeVector) * upVector.
-
-            if desiredMovementVector:mag < 0.01 and movementVector:mag < 0.01 {
-                print "--------------------               " at (0,10).
-                set forwardDistance to 10.
-                set dockingStep to 4.
-            }
+        if terminal:input:hasChar if terminal:input:getChar():toLower = "q" {
+            unlock all.
+            return.
         }
-        else if dockingStep = 4 {
-            set desiredMovementVector to 
-                -movementVector 
-                + (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector
-                + vDot(rightVector, relativeVector) * rightVector
-                + vDot(upVector, relativeVector) * upVector.
+        // set input to "".
+        // if terminal:input:haschar {
+        //     set input to terminal:input:getChar().
+        //     print "Reading char " + input + " " + input:tolower() at (0, 34).
+        //     // if input:toLower() = "q" {
+        //     //     return.
+        //     // }
+        // }
 
-            if desiredMovementVector:mag < 0.01 and movementVector:mag < 0.01 {
-                set forwardDistance to 0.
-            }
+        // set t to target.
 
-            if dockingPort:haspartner {
-                set targetFacingVector:show to false.
-                set differenceVector:show to false.
-                set upVectorDraw:show to false.
-                set rightVectorDraw:show to false.
-                set forwardDistanceVectorDraw:show to false.
-                set movementVectorDraw:show to false.
-                set desiredMovementVectorDraw:show to false.
-                set accelerationVectorDraw:show to false.
-                clearScreen.
-                return.
-            }
+        if dockingPort:haspartner or t:typename <> "DockingPort" or input:tolower() = "q" {
+            unset targetFacingVector.
+            unset differenceVector.
+            unset upVectorDraw.
+            unset rightVectorDraw.
+            unset forwardDistanceVectorDraw.
+            unset movementVectorDraw.
+            unset desiredMovementVectorDraw.
+            unset accelerationVectorDraw.
+            unset translationVectorDraw.
+            
+            unlock translationVector.
+            unlock accelerationVector.
+            unlock movementVector.
+            unlock forwardDistanceVector.
+            unlock relativeVector.
+
+            unlock all.
+
+            // set targetFacingVector:show to false.
+            // set differenceVector:show to false.
+            // set upVectorDraw:show to false.
+            // set rightVectorDraw:show to false.
+            // set forwardDistanceVectorDraw:show to false.
+            // set movementVectorDraw:show to false.
+            // set desiredMovementVectorDraw:show to false.
+            // set accelerationVectorDraw:show to false.
+            // set translationVectorDraw:show to false.
+
+            clearScreen.
+            return.
         }
 
-        set translationScalar to (desiredMovementVector - movementVector):mag.
-    
-
-        
         if (desiredMovementVector:mag > maxVelocity) set desiredMovementVector:mag to maxVelocity.
+        // set translationScalar to 1/sqrt(accelerationVector:mag).
+        // print (desiredMovementVector - movementVector):mag at (0,12).
+
         set ship:control:translation to translationVector.
-        print desiredMovementVector + "                          " at (0, 4).
-        print accelerationVector + "                         " at (0, 6).
-        print translationVector + "                          " at (0, 8).  
+        print "Right: " + round(translationVector:x, 2) + "             " at (0,0).
+        print "Up: " + round(translationVector:y, 2) + "             " at (0,1).
+        print "Forward: " + round(translationVector:z, 2) + "             " at (0,2).
+
+        if accelerationVector:mag < 6 
+            set ship:control:translation to v(0,0,0).
+
+        // print desiredMovementVector + "                          " at (0, 4).
+        // print accelerationVector + "                         " at (0, 6).
+        // print translationVector + "                          " at (0, 8).  
+
+        // print vdot(relativeVector, upVector) + "          " at (0, 0).
+        // print vdot(relativeVector, rightVector) + "          " at (0, 1).
+        // print vdot(forwardDistanceVector, -t:facing:vector) + "          " at (0, 2).
+
         
     }
-}
 
-dock().
+    print "Canceling relative momentum" at (0,10).
+
+    until false {
+        set desiredMovementVector to V(0,0,0).
+
+        if (desiredMovementVector:mag < 0.1 and movementVector:mag < 0.1) break.
+
+        everyLoop().
+    }
+
+    print "Aligning forward              " at (0,10).
+
+    until false {
+        local distance to abs(forwardDistanceVector:mag - forwardDistance).
+        
+        if distance > 100 set maxVelocity to 8.
+        else if distance > 50 set maxVelocity to 3.
+        else if distance > 20 set maxVelocity to 1.
+        else if distance > 5 set maxVelocity to 0.5.
+        else set maxVelocity to 0.2.
+
+        set desiredMovementVector to 
+            // (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector/10.
+            (forwardDistanceVector:mag - forwardDistance) * -t:facing:vector.
+
+        if desiredMovementVector:mag < 0.1 and movementVector:mag < 0.1 break.
+
+        everyLoop().
+    }
+
+    print "Aligning up and right           " at (0,10).
+    // set maxVelocity to 0.5.
+
+    until false {
+        local distance to sqrt(vDot(rightVector, relativeVector)^2 + vDot(upVector, relativeVector)^2).
+        
+        if distance > 100 set maxVelocity to 8.
+        else if distance > 50 set maxVelocity to 3.
+        else if distance > 20 set maxVelocity to 1.
+        else if distance > 7 set maxVelocity to 0.5.
+        else set maxVelocity to 0.2.
+        
+        set desiredMovementVector to 
+            (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector
+            + vDot(rightVector, relativeVector) * rightVector
+            + vDot(upVector, relativeVector) * upVector.
+
+        if desiredMovementVector:mag < 0.2 and movementVector:mag < 0.2 break.
+        
+        everyLoop().
+    }
+
+    print "--------------------               " at (0,10).
+    set forwardDistance to 10.
+    // set maxVelocity to 0.25.
+
+    until false {
+            
+        set desiredMovementVector to  
+            (vdot(forwardDistanceVector, -t:facing:vector) - forwardDistance) * -t:facing:vector
+            + vDot(rightVector, relativeVector) * rightVector
+            + vDot(upVector, relativeVector) * upVector.
+
+        if desiredMovementVector:mag < 0.1 and movementVector:mag < 0.1 {
+            set forwardDistance to 0.
+            set maxVelocity to 0.25.
+        }
+
+        
+
+        everyLoop().
+    }
+}

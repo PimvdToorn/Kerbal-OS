@@ -105,9 +105,15 @@ function executeManeuver {
     local startTime is maneuverNode:time - halfdVBurnTime.
     local endTime is startTime + burnTime.
 
+    print "[Q] Cancel" at (0, 36).
 
     until time:seconds >= startTime {
         print "Start in:     " + round(startTime - time:seconds, 2) + "s      " at (0, 13). 
+
+        if terminal:input:hasChar if terminal:input:getChar():toLower = "q" {
+            unlock all.
+            return.
+        }
     }
 
     lock throttle to throt.
@@ -118,20 +124,28 @@ function executeManeuver {
 
     until time:seconds >= endTime {
         print round(endTime - time:seconds, 2) + "s left                    " at (0, 13). 
+
+        if terminal:input:hasChar if terminal:input:getChar():toLower = "q" {
+            unlock all.
+            return.
+        }
     }.
 
 
 
     print "-------------------------------------" at (0, 14).
     print "Burn finished" at (0, 15).
+
+    print "Press any key to exit" at (0, 16).
+    terminal:input:getchar().
+
+    unlock all.
+    clearScreen.
 }   
 
-parameter minTime is 10.
-parameter Othrot is 1.
+// parameter minTime is 10.
+// parameter Othrot is 1.
 
-executeManeuver(minTime, Othrot).
+// executeManeuver(minTime, Othrot).
 
 
-print "Press any key to exit" at (0, 16).
-terminal:input:getchar().
-clearScreen.
