@@ -1,15 +1,28 @@
-function launch {
-    set targetOrbit to 100000.
-    set altitude45deg to 10000.
-    set fairingAlt to 45000.
+@lazyGlobal off.
+runOncePath("0:libraries/read_line").
 
-    set finished to false.
+function launch {
+    local fairingAlt to 45000.
+
+    local finished to false.
 
     print "waiting for ship to fully load".
     wait until ship:unpacked.
     CLEARSCREEN.
     SAS off.
 
+    print "Target altitude: ".
+    print "Default 100000m".
+
+    local targetOrbit to read_line(17, 0):toNumber(100000).
+
+    print "-------------------------------------".
+    print "45 degree altitude: ".
+    print "Default 10000m".
+
+    local altitude45deg to read_line(20, 3):toNumber(10000).
+
+    print "-------------------------------------".
     print "Press any key to launch".
     terminal:input:getchar().
     CLEARSCREEN.
@@ -50,10 +63,10 @@ function launch {
     }
 
 
-    SET throt to 1.0.
+    local throt to 1.0.
     LOCK THROTTLE TO throt.
 
-    set gravityTurnFunction to sqrtArc@:bind(altitude45deg).
+    local gravityTurnFunction to sqrtArc@:bind(altitude45deg).
 
 
     LOCK steering TO HEADING(90, gravityTurnFunction(), -90).
@@ -67,7 +80,6 @@ function launch {
     LOCK steering TO prograde.
 
 
-    // until altitude >= targetOrbit {
     until altitude >= 70000 {
         if apoapsis < targetOrbit {
             set throt to 1.
