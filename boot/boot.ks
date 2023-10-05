@@ -1,3 +1,5 @@
+@lazyGlobal off.
+
 function boot {
     clearScreen.
 
@@ -5,22 +7,22 @@ function boot {
     print "2: Execute maneuver".
     print "3: Dock".
 
-    set mode to terminal:input:getchar().
+    local mode to terminal:input:getchar().
 
     if mode = "1" {
         launch().
     }
-    if mode = "2" {
+    else if mode = "2" {
         executeManeuver().
     }
-    if mode = "3" {
+    else if mode = "3" {
         dock().
     }
     unlock all.
 }
 
-runPath("0:launch").
-runPath("0:eM").
-runPath("0:dock").
+runOncePath("0:launch").
+runOncePath("0:eM").
+runOncePath("0:dock").
 
 until false boot().
