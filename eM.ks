@@ -1,3 +1,5 @@
+@lazyGlobal off.
+
 function getIsp {
     parameter vess is ship.
 
@@ -11,48 +13,19 @@ function getIsp {
         } 
     }
 
+    if count = 0 {
+        print "Error: No engines activated".
+        print " ".
+        print "Press any key to exit".
+        terminal:input:getchar().
+        return 0.
+    }
+
     local ispg0 is ispg0s/count.
     local isp is ispg0 * constant:g0.
 
     return isp.
 }
-
-// function accAtT {
-//     parameter t.
-//     parameter F.
-//     parameter M0.
-//     parameter Isp.
-
-//     return F / (M0 - t*(F/Isp)).
-// }
-
-// function calculateBurn {
-//     parameter step is 0.1.
-//     parameter thrust is ship:availablethrust().
-//     parameter Isp is getIsp().
-//     parameter startMass is ship:mass.
-//     parameter targetdV is nextNode:burnvector:mag.
-
-//     local burndV is 0.
-//     local burnTime is 0.
-//     local halfdVBurnTime is 0.
-
-//     until burndV >= targetdV {
-//         set burnTime to burnTime + step.
-
-//         // Middle integral
-//         set burndV to burndV + (accAtT(burnTime-(step/2), thrust, startMass, isp) * step).
-
-//         if halfdVBurnTime = 0 and burndV >= targetdV/2 {
-//             set halfdVBurnTime to burnTime.
-//         }
-
-//         print "Burn sec:    " + round(burnTime, 1) at (0, 5).
-//         print "Burn dV:     " + round(burndV, 1) at (0, 6).
-//     }
-
-//     return list(burnTime, halfdVBurnTime).
-// }
 
 function executeManeuver {
     parameter minBurnTime is 10.
@@ -60,21 +33,25 @@ function executeManeuver {
     parameter throtDownStep is 0.5.
     parameter maneuverNode is nextNode.
 
+    clearScreen.
+
     lock steering to maneuverNode:burnvector.
 
     local nodedV to maneuverNode:burnvector:mag.
 
     local isp is getIsp().
+    if isp = 0 return.
+
     local totalThrust is ship:availablethrust().
     local startMass is ship:mass.
 
     local thrust is totalThrust * throt.
 
     clearScreen.
-    print "Node dV: " + nodedV + "m/s".
-    print "Isp:     " + isp + "m/s".
-    print "Thrust:  " + thrust + "N".
-    print "Mass:    " + startMass + "kg".
+    print "Node dV: " + round(nodedV, 2) + "m/s".
+    print "Isp:     " + round(isp, 2) + "m/s".
+    print "Thrust:  " + round(thrust, 2) + "N".
+    print "Mass:    " + round(startMass, 2) + "kg".
     print "-------------------------------------".
 
 
@@ -135,17 +112,10 @@ function executeManeuver {
 
     print "-------------------------------------" at (0, 14).
     print "Burn finished" at (0, 15).
+    unlock all.
 
     print "Press any key to exit" at (0, 16).
     terminal:input:getchar().
 
-    unlock all.
     clearScreen.
 }   
-
-// parameter minTime is 10.
-// parameter Othrot is 1.
-
-// executeManeuver(minTime, Othrot).
-
-
