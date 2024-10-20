@@ -2,7 +2,7 @@
 runOncePath("0:libraries/read_line").
 
 function launch {
-    local fairingAlt to 45000.
+    local fairingAlt to 50000.
 
     local finished to false.
 
@@ -12,15 +12,21 @@ function launch {
     SAS off.
 
     print "Target altitude: ".
-    print "Default 100000m".
+    print "Default 100.000m".
 
     local targetOrbit to read_line(17, 0):toNumber(100000).
 
     print "-------------------------------------".
     print "45 degree altitude: ".
-    print "Default 10000m".
+    print "Default 10.000m".
 
     local altitude45deg to read_line(20, 3):toNumber(10000).
+
+    print "-------------------------------------".
+    print "Target angle: ".
+    print "Default 90".
+
+    local targetAngle to read_line(14, 6):toNumber(90).
 
     print "-------------------------------------".
     print "Press any key to launch".
@@ -63,33 +69,42 @@ function launch {
     }
 
 
-    local throt to 1.0.
-    LOCK THROTTLE TO throt.
+    local target_twr to 1.75.
+
+    function throt {
+        if ship:availablethrust = 0 {
+            return 0.
+        }
+        return target_twr / (ship:availablethrust / (ship:mass * constant:g0)).
+    }
+    LOCK THROTTLE TO throt().
 
     local gravityTurnFunction to sqrtArc@:bind(altitude45deg).
 
 
-    LOCK steering TO HEADING(90, gravityTurnFunction(), -90).
+    LOCK steering TO HEADING(targetAngle, gravityTurnFunction(), -90).
 
     until apoapsis >= targetOrbit {
         print ("Pitch: " + round(gravityTurnFunction(), 1)) at (0, 0).
+        print "TWR: " + round(ship:availablethrust / (ship:mass * constant:g0), 2) at (0, 1).
+        print "Throt: " + round(throt, 2) + "    " at (0, 2).
     }
 
 
-    set throt to 0.
+    lock THROTTLE to 0.
     LOCK steering TO prograde.
-
+    set finished to true.
 
     until altitude >= 70000 {
         if apoapsis < targetOrbit {
-            set throt to 1.
+            lock THROTTLE to 1.
         }
         else {
-            set throt to 0.
+            lock THROTTLE to 0.
             wait 1.
         }
     }
 
     unlock all.
-    set finished to true.
+    
 }
