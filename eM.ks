@@ -108,11 +108,10 @@ function executeManeuver {
 
     // Warping
     local maxWarpLevel is kuniverse:timewarp:RAILSRATELIST:length - 1.
-    print kuniverse:timewarp:RAILSRATELIST[maxWarpLevel]*20 at (0, 16).
     when startTime - time:seconds - 10 < kuniverse:timewarp:RAILSRATELIST[maxWarpLevel - 1]*10 then {
         set maxWarpLevel to maxWarpLevel - 1.
-        print kuniverse:timewarp:RAILSRATELIST[maxWarpLevel] + "                      " at (0, 16).
-        print maxWarpLevel at (0, 17).
+        print "Max warp: " + kuniverse:timewarp:RAILSRATELIST[maxWarpLevel] + "                      " at (0, 17).
+        print "At level:" + maxWarpLevel + 1 at (0, 18).
         if maxWarpLevel > 0 {
             preserve.
         }
@@ -123,27 +122,6 @@ function executeManeuver {
             preserve.
         }
     }
-
-    // when startTime - time:seconds < 100 then {
-    //     if warp > 3 {
-    //         set warp to 3.
-    //     }
-    // }
-    // when startTime - time:seconds < 60 then {
-    //     if warp > 2 {
-    //         set warp to 2.
-    //     }
-    // }
-    // when startTime - time:seconds < 25 then {
-    //     if warp > 1 {
-    //         set warp to 1.
-    //     }
-    // }
-    // when startTime - time:seconds < 15 then {
-    //     if warp > 0 {
-    //         set warp to 0.
-    //     }
-    // }
 
     // Countdown
     until time:seconds >= startTime {
