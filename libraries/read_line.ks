@@ -14,6 +14,7 @@ function read_line {
         if input = terminal:input:return return line.
         if input = terminal:input:backspace and line:length > 0 {
             set line to line:substring(0, line:length - 1).
+            print " " at (terminalX + line:length, terminalY).
         }
         else set line to line + input.
 
@@ -39,6 +40,7 @@ function read_line_non_blocking {
     }
     if input = terminal:input:backspace and line:length > 0 {
         set line to line:substring(0, line:length - 1).
+        print " " at (terminalX + line:length, terminalY).
     }
     else set line to line + input.
 

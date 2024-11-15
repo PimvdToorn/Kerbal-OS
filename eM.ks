@@ -98,8 +98,8 @@ function executeManeuver {
 
     when time:seconds >= startTime then {
         lock throttle to throt.
-        print "-------------------------------------" at (0, 14).
-        print "Start burn" at (0, 15).
+        print "-------------------------------------" at (0, 19).
+        print "Start burn                 " at (0, 20).
     }
 
     when time:seconds >= endTime then {
@@ -111,7 +111,7 @@ function executeManeuver {
     when startTime - time:seconds - 10 < kuniverse:timewarp:RAILSRATELIST[maxWarpLevel - 1]*10 then {
         set maxWarpLevel to maxWarpLevel - 1.
         print "Max warp: " + kuniverse:timewarp:RAILSRATELIST[maxWarpLevel] + "                      " at (0, 17).
-        print "At level:" + maxWarpLevel + 1 at (0, 18).
+        print "At level: " + (maxWarpLevel + 1) at (0, 18).
         if maxWarpLevel > 0 {
             preserve.
         }
@@ -125,7 +125,7 @@ function executeManeuver {
 
     // Countdown
     until time:seconds >= startTime {
-        print "Start in:   " + round(startTime - time:seconds) + "s      " at (0, 15). 
+        print "Start in:  " + round(startTime - time:seconds) + "s      " at (0, 15). 
 
         if terminal:input:hasChar {
             local input is terminal:input:getChar():toLower.
@@ -151,20 +151,20 @@ function executeManeuver {
 
     // Burn
     until time:seconds >= endTime {
-        print round(endTime - time:seconds, 2) + "s left                    " at (0, 13). 
+        print round(endTime - time:seconds, 2) + "s left                    " at (0, 21). 
 
         if terminal:input:hasChar if terminal:input:getChar():toLower = "q" {
             reboot.
         }
     }.
 
-    print "-------------------------------------" at (0, 14).
-    print "Burn finished" at (0, 15).
+    print "-------------------------------------" at (0, 21).
+    print "Burn finished" at (0, 22).
     lock throttle to 0.
     set maxWarpLevel to -1.
     unlock all.
 
-    print "Press any key to exit" at (0, 16).
+    print "Press any key to exit" at (0, 24).
     terminal:input:getchar().
 
     clearScreen.
