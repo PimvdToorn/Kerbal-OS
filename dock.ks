@@ -92,7 +92,7 @@ function dock {
     local maxVelocity to 1.
     local maxVelocityMultiplier to 1.
     local rotation to 0.
-    local forwardDistance to max(10, min(forwardDistanceVector:mag, 200)).
+    local forwardDistance to max(2, min(forwardDistanceVector:mag, 200)).
 
     local CANCEL_MOMENTUM to 1.
     local ALIGN_FORWARD_DISTANCE to 2.
@@ -114,9 +114,9 @@ function dock {
         else if m = APPROACH                print "Approaching                  " at (0,0).
 
         print "---------------------------------------------" at (0,1).
-        print "Target                : " + t:tag at (0,2).
-        print "Rotation              : " + rotation at (0,3).
-        print "Distance nxt waypoint : " at (0,4).
+        print "Target           : " + t:tag at (0,2).
+        print "Rotation         : " + rotation at (0,3).
+        print "Dist waypoint    : " at (0,4).
         print "---------------------------------------------" at (0,5).
         print "[W/S] Change max velocity multiplier: " + round(maxVelocityMultiplier,1) at (0,6).
         print "------------------" at (0,7).
@@ -147,94 +147,112 @@ function dock {
     }
     drawHUD().
 
-    function changeRotation {
-        if modeOverride <> CHANGE_ROTATION {
-            set modeOverride to CHANGE_ROTATION.
-            print "<Set rotation>" at (0,3).
-        }
-
-        set rotation to read_line_non_blocking(29, 3).
-        if rotation = terminal:input:return return.
-
-        set rotation to rotation:toNumber(0).
-
+    function setRotation {
         local rotatedVector to cos(rotation) * t:facing:upvector 
             + sin(rotation) * (vCrs(t:facing:upvector, -t:facing:vector))
             + (1 - cos(rotation)) * vDot(-t:facing:vector, t:facing:upvector) * -t:facing:vector.
 
         lock steering to lookDirUp(-t:facing:vector, rotatedVector).
 
+        print "Aligning heading              " at (0,0).
+        until vdot(ship:facing:forevector, forwardVector) > 0.99 wait 1.
+        wait 2.
+        until vdot(ship:facing:forevector, forwardVector) > 0.99 wait 1. 
+    }
+    setRotation().
+
+    function changeRotation {
+        if modeOverride <> CHANGE_ROTATION {
+            set modeOverride to CHANGE_ROTATION.
+            print "<Set rotation>" at (0,3).
+        }
+
+        set rotation to read_line_non_blocking(19, 3).
+        if rotation = terminal:input:return return.
+
+        set rotation to rotation:toNumber(0).
+        setRotation().
+
         set modeOverride to 0.
         drawHUD().
+        everyLoop().
     }
 
-    lock steering to forwardVector.
-    print "Aligning heading              " at (0,0).
-    until vdot(ship:facing:forevector, forwardVector) > 0.99 wait 1.
-    wait 2.
-    until vdot(ship:facing:forevector, forwardVector) > 0.99 wait 1. 
+    function drawVecs {
+        local targetFacingVector to vecDraw(
+            { return t:position. }, 
+            { return 3*t:facing:vector. }
+            ).
+        set targetFacingVector:show to true.
 
-    local targetFacingVector to vecDraw(
-        { return t:position. }, 
-        { return 3*t:facing:vector. }
+        local differenceVector to vecDraw(
+            { return dockingPort:position. }, 
+            { return relativeVector. },
+            rgb(1,0,1)
+            ).
+        set differenceVector:show to true.
+
+        local upVectorDraw to vecDraw(
+            { return dockingPort:position. },
+            { return 3*upVector. }, 
+            rgb(0,0,1)
+            ).
+        set upVectorDraw:show to true.
+
+        local targetUpVectorDraw to vecDraw(
+            { return t:position. },
+            { return 3*t:facing:upVector. }, 
+            rgb(0,0,1)
+            ).
+        set targetUpVectorDraw:show to true.
+
+        // local rightVectorDraw to vecDraw(
+        //     { return dockingPort:position. },
+        //     { return 3*rightVector. }, 
+        //     rgb(0,1,0)
+        //     ).
+        // set rightVectorDraw:show to true.
+
+        local forwardDistanceVectorDraw to vecDraw(
+            { return dockingPort:position. },
+            { return forwardDistanceVector. },
+            rgb(1,0,1)
         ).
-    set targetFacingVector:show to true.
+        set forwardDistanceVectorDraw:show to true.
 
-    local differenceVector to vecDraw(
-        { return dockingPort:position. }, 
-        { return relativeVector. },
-        rgb(1,0,1)
-        ).
-    set differenceVector:show to true.
+        local movementVectorDraw to vecDraw(
+            { return dockingPort:position. }, 
+            { return 5*movementVector. }, 
+            rgb(1,0,0)
+            ).
+        set movementVectorDraw:show to true.
 
-    local upVectorDraw to vecDraw(
-        { return dockingPort:position. },
-        { return 3*upVector. }, 
-        rgb(0,0,1)
-        ).
-    set upVectorDraw:show to true.
+        local desiredMovementVectorDraw to vecDraw(
+            { return dockingPort:position. }, 
+            { return 5*desiredMovementVector. }, 
+            rgb(1,1,0)
+            ).
+        set desiredMovementVectorDraw:show to true.
 
-    local rightVectorDraw to vecDraw(
-        { return dockingPort:position. },
-        { return 3*rightVector. }, 
-        rgb(0,1,0)
-        ).
-    set rightVectorDraw:show to true.
-
-    local forwardDistanceVectorDraw to vecDraw(
-        { return dockingPort:position. },
-        { return forwardDistanceVector. },
-        rgb(1,0,1)
-    ).
-    set forwardDistanceVectorDraw:show to true.
-
-    local movementVectorDraw to vecDraw(
-        { return dockingPort:position. }, 
-        { return 5*movementVector. }, 
-        rgb(1,0,0)
-        ).
-    set movementVectorDraw:show to true.
-
-    local desiredMovementVectorDraw to vecDraw(
-        { return dockingPort:position. }, 
-        { return 5*desiredMovementVector. }, 
-        rgb(1,1,0)
-        ).
-    set desiredMovementVectorDraw:show to true.
-
-    local accelerationVectorDraw to vecDraw(
-        { return dockingPort:position. }, 
-        { return 5*accelerationVector. }, 
-        rgb(1,1,1)
-        ).
-    set accelerationVectorDraw:show to true.
+        local accelerationVectorDraw to vecDraw(
+            { return dockingPort:position. }, 
+            { return 5*accelerationVector. }, 
+            rgb(1,1,1)
+            ).
+        set accelerationVectorDraw:show to true.
+    }
+    drawVecs().
 
     function quit {
-        wait 3.
         CLEARVECDRAWS().
+
+        // reboot.
+        unlock all.
         set ship:control:translation to v(0,0,0).
-        unlock steering.
         set ship:control:neutralize to true.
+        clearScreen.
+        print "Quitting" at (0,0).
+        wait 2.
     }
 
     when dockingPort:haspartner then {
@@ -243,9 +261,6 @@ function dock {
     }
 
     function everyLoop {
-        // set ship:control:translation to v(0,0,0).
-
-        print readingInput at (0,25).
         if terminal:input:haschar and not readingInput {
             local input to terminal:input:getChar().
             terminal:input:clear().
@@ -286,7 +301,7 @@ function dock {
                 + vDot(upVector, relativeVector) * upVector * 10.
         }
         else if m = APPROACH {
-            set distance to abs(forwardDistanceVector:mag - forwardDistance).
+            set distance to relativeVector:mag.
             set desiredMovementVector to  
                 (vdot(forwardDistanceVector, forwardVector) - forwardDistance) * forwardVector
                 + vDot(rightVector, relativeVector) * rightVector * 10
@@ -296,7 +311,7 @@ function dock {
             changeRotation().
         }
 
-        print round(distance, 1) + "m     " at (24,4).
+        print round(distance, 1) + "m     " at (19,4).
 
         if distance > 100 set maxVelocity to 8.
         else if distance > 50 set maxVelocity to 3.
@@ -345,5 +360,8 @@ function dock {
 
     until desiredMovementVector:mag < 0.1 and movementVector:mag < 0.1 and modeOverride = 0 {
         if everyLoop() = 1 return.
+        print desiredMovementVector:mag at (0,24).
+        print movementVector:mag at (0,25).
     }
+    quit().
 }
