@@ -3,7 +3,7 @@
 local line to "".
 global readingInput to false.
 
-function read_line {
+function readLine {
     parameter terminalX to 0.
     parameter terminalY to 0.
     set line to "".
@@ -22,7 +22,7 @@ function read_line {
     }
 }
 
-function read_line_non_blocking {
+function readLineNonBlocking {
     parameter terminalX to 0.
     parameter terminalY to 0.
     if not readingInput {
