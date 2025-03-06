@@ -14,19 +14,19 @@ function launch {
     print "Target altitude: ".
     print "Default 100.000m".
 
-    local targetOrbit to read_line(17, 0):toNumber(100000).
+    local targetOrbit to readLine(17, 0):toNumber(100000).
 
     print "-------------------------------------".
     print "45 degree altitude: ".
-    print "Default 10.000m".
+    print "Default 15.000m".
 
-    local altitude45deg to read_line(20, 3):toNumber(10000).
+    local altitude45deg to readLine(20, 3):toNumber(15000).
 
     print "-------------------------------------".
     print "Target angle: ".
     print "Default 90".
 
-    local targetAngle to read_line(14, 6):toNumber(90).
+    local targetAngle to readLine(14, 6):toNumber(90).
 
     print "-------------------------------------".
     print "Press any key to launch".
@@ -44,15 +44,24 @@ function launch {
 
 
 
-    WHEN MAXTHRUST = 0 THEN {
+    when MAXTHRUST = 0 then {
         if not finished {
-            PRINT "Staging".
-            STAGE.
-            PRESERVE.
+            print "Staging" at (0, 3).
+            if altitude > 1000 {
+                lock throttle to 0.
+                stage.
+                wait 1.
+                lock throttle to min(throt(), 0.1).
+                wait 1.
+                lock throttle to throt().
+            } else {
+                stage.
+            }
+            preserve.
         }
     }.
 
-    WHEN altitude > fairingAlt THEN {
+    when altitude > fairingAlt then {
         local fairings is ship:partstagged("fairing").
 
         for fairing in fairings {
@@ -69,7 +78,7 @@ function launch {
     }
 
 
-    local target_twr to 1.75.
+    local target_twr to 1.8.
 
     function throt {
         if ship:availablethrust = 0 {
@@ -102,6 +111,15 @@ function launch {
         else {
             lock THROTTLE to 0.
             wait 1.
+        }
+        if terminal:input:haschar and not readingInput {
+            local input to terminal:input:getChar().
+            terminal:input:clear().
+
+            if input:tolower = "q" {
+                unlock all.
+                return 1.
+            }
         }
     }
 
