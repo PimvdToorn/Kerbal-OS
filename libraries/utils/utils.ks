@@ -8,13 +8,13 @@ function rMod {
 
 function drawHud {
     parameter text.
-    parameter heightOffset to 0.
     parameter widthOffset to 0.
+    parameter heightOffset to 0.
 
     local lines to text:length().
     for i in range(lines) {
 
-        print text[i]:padRight(terminal:width) at (0 + widthOffset, i + heightOffset).
+        print text[i]:padRight(terminal:width - widthOffset) at (0 + widthOffset, i + heightOffset).
     }
 }
 
