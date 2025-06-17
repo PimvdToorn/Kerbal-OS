@@ -1,5 +1,6 @@
 @lazyGlobal off.
 runOncePath("0:libraries/read_line").
+runOncePath("0:libraries/utils/utils").
 
 function maxVelocity {
     parameter distance.
@@ -62,7 +63,7 @@ function dock {
             set x to x+1.
         }
 
-        local portNumber to read_line(20, 0):tonumber(1).
+        local portNumber to readLine(20, 0):tonumber(1).
 
         set t to dockingPorts[portNumber-1].
     }
@@ -117,48 +118,60 @@ function dock {
 
     //--------------------------------------------------------------------------------------------
 
-    function drawHUD {
+    function draw {
         clearScreen.
         local m to choose mode if modeOverride = 0 else modeOverride.
-        if      m = CANCEL_MOMENTUM         print "Canceling relative momentum  " at (0,0).
-        else if m = ALIGN_FORWARD_DISTANCE  print "Aligning forward             " at (0,0).
-        else if m = ALIGN_SIDE_AND_UP       print "Aligning sideways and up/down" at (0,0).
-        else if m = APPROACH                print "Approaching                  " at (0,0).
+        local modeString to "Mode: ".
+        if      m = CANCEL_MOMENTUM         set modeString to modeString + "Canceling relative momentum".
+        else if m = ALIGN_FORWARD_DISTANCE  set modeString to modeString + "Aligning forward".
+        else if m = ALIGN_SIDE_AND_UP       set modeString to modeString + "Aligning sideways and up/down".
+        else if m = APPROACH                set modeString to modeString + "Approaching".
 
-        print "-------------------------------------" at (0,1).
-        print "Target           : " + t:tag at (0,2).
-        print "Rotation         : " + rotation at (0,3).
-        print "Dist waypoint    : " at (0,4).
-        print "-------------------------------------" at (0,5).
-        print "[W/S] Change max velocity multiplier: " + round(maxVelocityMultiplier,1) at (0,6).
-        print "         ------------------" at (0,7).
-        print "         |Distance|Max vel|" at (0,8).
-        print "         |----------------|" at (0,9).
-        print "         |  >100  |  8.11 |" at (0,10).
-        print "         |  <100  |  8.11 |" at (0,11).
-        print "         |  <50   |  8.11 |" at (0,12).
-        print "         |  <20   |  8.11 |" at (0,13).
-        print "         |  <5    |  8.11 |" at (0,14).
-        print "         |  <1    |  8.11 |" at (0,15).
-        print "         ------------------" at (0,16).
-        print round(maxVelocity(101)*maxVelocityMultiplier, 2) + "   " at (21,10).
-        print round(maxVelocity(99)*maxVelocityMultiplier, 2) + "   " at (21,11).
-        print round(maxVelocity(49)*maxVelocityMultiplier, 2) + "   " at (21,12).
-        print round(maxVelocity(19)*maxVelocityMultiplier, 2) + "   " at (21,13).
-        print round(maxVelocity(4)*maxVelocityMultiplier, 2) + "   " at (21,14).
-        print round(maxVelocity(0.9)*maxVelocityMultiplier, 2) + "   " at (21,15).
-        print "|" at (26,10).
-        print "|" at (26,11).
-        print "|" at (26,12).
-        print "|" at (26,13).
-        print "|" at (26,14).
-        print "|" at (26,15).
-        print "Max velocity: " at (0,17).
+        drawHud(list(
+            modeString,
+            "-------------------------------------",
+            "Target           : " + t:tag,
+            "Rotation         : " + rotation,
+            "Dist waypoint    : " + distance,
+            "-------------------------------------",
+            "[W/S] Change max velocity multiplier: " + round(maxVelocityMultiplier,1),
+            "         ------------------",
+            "         |Distance|Max vel|",
+            "         |----------------|",
+            "         |  >100  |  8.11 |",
+            "         |  <100  |  8.11 |",
+            "         |  <50   |  8.11 |",
+            "         |  <20   |  8.11 |",
+            "         |  <5    |  8.11 |",
+            "         |  <1    |  8.11 |",
+            "         ------------------",
+            "Max velocity: "
+        )).
 
-        print "[R] change rotation" at (0, 34).
-        print "[Q] cancel docking" at (0, 35).
+        drawHud(list(
+            round(maxVelocity(101)*maxVelocityMultiplier, 2) + "   ",
+            round(maxVelocity(99)*maxVelocityMultiplier, 2) + "   ",
+            round(maxVelocity(49)*maxVelocityMultiplier, 2) + "   ",
+            round(maxVelocity(19)*maxVelocityMultiplier, 2) + "   ",
+            round(maxVelocity(4)*maxVelocityMultiplier, 2) + "   ",
+            round(maxVelocity(0.9)*maxVelocityMultiplier, 2) + "   "
+        ), 21, 10).
+
+        drawHud(list(
+            "|",
+            "|",
+            "|",
+            "|",
+            "|",
+            "|"
+        ), 26, 10).
+
+        drawHud(list(
+            "[R] change rotation", 
+            "[Q] cancel docking"
+        ), 0, 34).
     }
-    drawHUD().
+    draw().
 
     function setRotation {
         parameter alignWait to false.
@@ -184,14 +197,14 @@ function dock {
             print "<Set rotation>" at (0,3).
         }
 
-        set rotation to read_line_non_blocking(19, 3).
+        set rotation to readLineNonBlocking(19, 3).
         if rotation = terminal:input:return return.
 
         set rotation to rotation:toNumber(0).
         setRotation(true).
 
         set modeOverride to 0.
-        drawHUD().
+        draw().
         everyLoop().
     }
 
@@ -287,11 +300,11 @@ function dock {
             }
             else if input = "w" {
                 set maxVelocityMultiplier to maxVelocityMultiplier + 0.25.
-                drawHUD().
+                draw().
             }
             else if input = "s" {
                 set maxVelocityMultiplier to maxVelocityMultiplier - 0.25.
-                drawHUD().
+                draw().
             }
         }
 
@@ -337,7 +350,7 @@ function dock {
     }
 
     set mode to CANCEL_MOMENTUM.
-    drawHUD().
+    draw().
     set distance to 0.
     set desiredMovementVector to V(0,0,0).
 
@@ -346,7 +359,7 @@ function dock {
     }
 
     set mode to ALIGN_FORWARD_DISTANCE.
-    drawHUD().
+    draw().
     everyLoop().
 
     until distance < 1 and abs(desiredMovementVector:mag - movementVector():mag) < 0.1 and modeOverride = 0 {
@@ -354,7 +367,7 @@ function dock {
     }
 
     set mode to ALIGN_SIDE_AND_UP.
-    drawHUD().
+    draw().
     everyLoop().
 
     until distance < 1 and abs(desiredMovementVector:mag - movementVector():mag) < 0.1 and modeOverride = 0 {
@@ -363,7 +376,7 @@ function dock {
 
     set mode to APPROACH.
     set forwardDistance to 0.
-    drawHUD().
+    draw().
     everyLoop().
 
     // until distance < 0.2 and abs(desiredMovementVector:mag - movementVector():mag) < 0.1 and modeOverride = 0 {
