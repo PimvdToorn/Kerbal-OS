@@ -52,7 +52,7 @@ function executeManeuver {
         print "Error: No engines activated".
         print "Press any key to exit".
         terminal:input:getchar().
-        return.
+        return 1.
     }
 
     local totalThrust is ship:availablethrust.
@@ -140,7 +140,7 @@ function executeManeuver {
                 set maxWarpLevel to 1.
                 set done to true.
                 unlock all.
-                return.
+                return 1.
             }
             if input = "c" {
                 clearScreen.
@@ -181,4 +181,6 @@ function executeManeuver {
     }
 
     clearScreen.
+    if hasNode and nextNode = maneuverNode { remove nextNode. }
+    return 0.
 }   
