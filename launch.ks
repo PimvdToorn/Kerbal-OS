@@ -1,5 +1,6 @@
 @lazyGlobal off.
 runOncePath("0:libraries/read_line").
+runOncePath("0:circularize").
 
 function launch {
     local fairingAlt to 50000.
@@ -122,6 +123,8 @@ function launch {
             }
         }
     }
+
+    circularizeApoapsis().
 
     unlock all.
     

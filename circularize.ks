@@ -14,7 +14,7 @@ function circularizeInput {
 
 function circ {
     parameter targetAlt.
-    parameter precision to 1.
+    parameter precision to 1000.
     local ret to circularize(targetAlt, precision).
     if ret = 1 {
         circ(targetAlt, precision).
@@ -53,7 +53,7 @@ function circularize {
 
     local timeAtAlt to timeAtAltitude(targetAlt).
     // local velocityVecAtTime to orbitableVelocityAtTime(timeAtAlt):orbit.
-    local circSpeed to circulairSpeed(targetAlt).
+    local circSpeed to circularSpeed(targetAlt).
 
     // local upVecAtAlt to positionAtTime(timeAtAlt) - body:position.
     // Remove up vector from velocity
@@ -167,8 +167,9 @@ function circularize {
     // }
     // drawVecs().
 
-    executeManeuver(5, false).
-    remove nextNode.
+    if executeManeuver(5, false) {
+        return 0.
+    }
     wait(1).
     unlock all.
 
@@ -257,32 +258,15 @@ function circularizePrecise {
 }
 
 function circularizeApoapsis {
-    local diff to circulairDifference(apoapsis).
+    local diff to circularDifference(apoapsis).
     add node(time:seconds + eta:apoapsis, 0, 0, diff).
     executeManeuver(5).
-    remove nextNode.
 }
 
 function circularizePeriapsis {
-    local diff to circulairDifference(periapsis).
+    local diff to circularDifference(periapsis).
     add node(time:seconds + eta:periapsis, 0, 0, diff).
     executeManeuver(5).
-    remove nextNode.
-}
-
-function circulairDifference {
-    parameter targetAlt.
-    local circleSpeed to circulairSpeed(targetAlt).
-    local speedAtTarget to speedAtAltitude(targetAlt).
-    return circleSpeed - speedAtTarget.
-}
-
-function circulairSpeed {
-    parameter targetAlt.
-    local mu to body:mu.
-    local bodyRadius to body:radius.
-    local targetRadius to targetAlt + bodyRadius.
-    return sqrt(mu / targetRadius).
 }
 
     // Bereken de doelradius en de benodigde circulaire snelheid

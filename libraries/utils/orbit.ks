@@ -1,3 +1,5 @@
+// Altitude
+// ############################################################################################################
 function speedAtAltitude {
     parameter height.
     parameter a to ship:orbit:semiMajorAxis.
@@ -25,6 +27,7 @@ function firstVerticalSpeedAtAltitude {
     return vertSpeed.
 }
 
+// Angle
 function angleAtAltitude {
     parameter height.
     parameter orb to orbit.
@@ -44,6 +47,7 @@ function firstAngleAtAltitude {
     return angle.
 }
 
+// Anomaly
 function eccentricAnomalyAtAltitude {
     parameter tAlt.
     parameter orb to orbit.
@@ -155,6 +159,9 @@ function timeAtAltitude {
     return min(timeAtAlt, otherTime).
 }
 
+
+// Time
+// ############################################################################################################
 function offsetOrbit {
     parameter t.
     parameter orb to orbit.
@@ -184,6 +191,28 @@ function positionAtTime {
     return offsetOrbit(t, orb):position.
 }
 
+function lastPeriapsisTime {
+    parameter orb to orbit.
+    return time:seconds + orb:eta:periapsis - orb:period.
+}
+
+function lastApoapsisTime {
+    parameter orb to orbit.
+    return time:seconds + orb:eta:apoapsis - orb:period.
+}
+
+function timeAtPeriapsis {
+    parameter orb to orbit.
+    return time:seconds + orb:eta:periapsis.
+}
+
+function timeAtApoapsis {
+    parameter orb to orbit.
+    return time:seconds + orb:eta:apoapsis.
+}
+
+// Anomalies
+// ############################################################################################################
 function trueToEccentricAnomaly {
     parameter trueAnomaly.
     parameter eccentricity to orbit:eccentricity.
@@ -233,12 +262,19 @@ function eccentricAnomalyToUTSeconds {
     return meanAnomalyToUTSeconds(eccentricToMeanAnomaly(eccentricAnomaly, eccentricity), meanAngularMotion, periapsisTime).
 }
 
-function lastPeriapsisTime {
-    parameter orb to orbit.
-    return time:seconds + orb:eta:periapsis - orb:period.
+// Circulair
+// ############################################################################################################
+function circularDifference {
+    parameter targetAlt.
+    local circleSpeed to circularSpeed(targetAlt).
+    local speedAtTarget to speedAtAltitude(targetAlt).
+    return circleSpeed - speedAtTarget.
 }
 
-function lastApoapsisTime {
-    parameter orb to orbit.
-    return time:seconds + orb:eta:apoapsis - orb:period.
+function circularSpeed {
+    parameter targetAlt.
+    local mu to body:mu.
+    local bodyRadius to body:radius.
+    local targetRadius to targetAlt + bodyRadius.
+    return sqrt(mu / targetRadius).
 }
