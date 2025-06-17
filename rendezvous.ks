@@ -1,5 +1,6 @@
 @lazyGlobal off.
 runOncePath("0:libraries/read_line").
+runOncePath("0:libraries/utils/orbit").
 
 function rendezvous {
     clearScreen.
@@ -47,41 +48,6 @@ function rendezvous {
 
     print "Press any key to return" at (0, 36).
     terminal:input:getchar().
-}
-
-function trueToEccentricAnomaly {
-    parameter trueAnomaly.
-    parameter eccentricity.
-    local eccentricAnomaly to arcTan2(-sqrt(1 - eccentricity^2) * sin(trueAnomaly), -eccentricity - cos(trueAnomaly)) + 180.
-    return eccentricAnomaly.
-}
-
-function eccentricToMeanAnomaly {
-    parameter eccentricAnomaly.
-    parameter eccentricity.
-    return eccentricAnomaly - eccentricity * sin(eccentricAnomaly).
-}
-
-function trueToMeanAnomaly {
-    parameter trueAnomaly.
-    parameter eccentricity.
-    local eccentricAnomaly to trueToEccentricAnomaly(trueAnomaly, eccentricity).
-    return eccentricToMeanAnomaly(eccentricAnomaly, eccentricity).
-}
-
-function meanAnomalyToUTSeconds {
-    parameter meanAnomaly.
-    parameter meanAngularMotion.
-    parameter periapsisTime.
-    return (meanAngularMotion * periapsisTime + meanAnomaly) / meanAngularMotion.
-}
-
-function trueAnomalyToUTSeconds {
-    parameter trueAnomaly.
-    parameter meanAngularMotion.
-    parameter periapsisTime.
-    parameter eccentricity.
-    return meanAnomalyToUTSeconds(trueToMeanAnomaly(trueAnomaly, eccentricity), meanAngularMotion, periapsisTime).
 }
 
 function orbitToNodeTimes {
